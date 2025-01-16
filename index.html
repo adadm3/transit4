@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <!-- Адаптивность для телефонов -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Armog Online Banking (USDT) - Deposit Example</title>
+  <style>
+    /* ========== Сброс и базовые стили ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+    }
+
+    /* ===== Адаптивная подстройка для узких экранов (меньше 480px) ===== */
+    @media (max-width: 480px) {
+      .login-box, .account-info-block, .accounts-wrapper {
+        padding: 15px;
+      }
+      .login-box h2 {
+        font-size: 18px;
+      }
+      .account-info-title {
+        font-size: 18px;
+      }
+      .account-section-header {
+        font-size: 16px;
+      }
+      .balance {
+        font-size: 16px;
+      }
+    }
+
+    /* ====== loginPage (по умолчанию показывается) ====== */
+    #loginPage {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e2f3d 0%, #2f4a63 100%);
+      display: flex;
+      flex-direction: column;
+    }
+    #loginHeader {
+      background: #1c2732;
+      padding: 15px 20px;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: bold;
+      border-bottom: 3px solid #141e25;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-title-login {
+      font-size: 22px;
+      letter-spacing: 0.5px;
+    }
+    .main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-box {
+      background-color: #fefefe;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 90%;
+      padding: 25px;
+      text-align: left;
+    }
+    .login-box h2 {
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: #222;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      background: #f9f9f9;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: #0056b3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+    .login-btn:hover {
+      background: #003f86;
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 14px;
+      color: #ccc;
+      margin: 20px 0;
+    }
+
+    /* ===== bankingPage (изначально скрыт) ===== */
+    #bankingPage {
+      display: none;
+      background-color: #ececec;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* Оверлей + спиннер */
+    #pageLoaderOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 6px solid #ccc;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .fadeOut {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Банкинг: шапка */
+    header#bankingHeader {
+      background: linear-gradient(135deg, #192f42 0%, #29516d 100%);
+      color: #ffffff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      border-bottom: 3px solid #1a242f;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      min-height: 70px;
+    }
+    .header-title-banking {
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 1;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+
+    .account-info-block {
+      flex: 2;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(to bottom right, #f0f0f0, #ffffff);
+    }
+    .account-info-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      border-left: 4px solid #007bff;
+      padding-left: 10px;
+      color: #333;
+    }
+    .account-info-subblock {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .info-left-col, .info-right-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .account-info-label {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .account-info-value {
+      color: #444;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .info-divider {
+      width: 100%;
+      height: 1px;
+      background-color: #ccc;
+      margin: 10px 0;
+    }
+
+    .accounts-wrapper {
+      flex: 1;
+      background: #fefefe;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: left;
+    }
+    .account-section {
+      margin-bottom: 25px;
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+    .account-section-header {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-align: left;
+      color: #333;
+      border-bottom: 1px solid #999;
+      padding-bottom: 5px;
+    }
+    .account-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .balance-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .balance-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+    .balance {
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+      margin: 5px 0 0 0;
+      text-align: right;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      min-width: 150px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .account-button {
+      font-size: 16px;
+      border-radius: 5px;
+      padding: 8px 15px;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      transition: 0.3s;
+      margin-top: 8px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .withdraw-btn {
+      background-color: #007bff;
+      color: #fff;
+      margin-right: 5px;
+    }
+    .withdraw-btn:hover {
+      background-color: #0056b3;
+    }
+    .convert-btn {
+      background-color: #ccc;
+      color: #333;
+      font-size: 14px;
+      margin-right: 5px;
+    }
+    .convert-btn:hover {
+      background-color: #bbb;
+    }
+    .statement-btn {
+      background-color: #555;
+      color: #fff;
+      font-size: 14px;
+      margin-top: 15px;
+      text-align: center;
+    }
+    .statement-btn:hover {
+      background-color: #444;
+    }
+
+    .transactions-wrapper {
+      margin: 30px auto;
+      max-width: 1200px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      color: #000;
+    }
+    .transactions-wrapper h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+      border-bottom: 2px solid #555;
+      padding-bottom: 10px;
+      text-align: left;
+    }
+    .transactions-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    .transactions-table th,
+    .transactions-table td {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      font-size: 16px;
+      color: #333;
+    }
+    .transactions-table th {
+      font-weight: bold;
+      color: #000;
+      background-color: #f0f0f0;
+    }
+    .transactions-table tr:hover {
+      background-color: #f9f9f9;
+    }
+    .receipt-button {
+      background-color: #5555aa;
+      color: #ffffff;
+      font-size: 14px;
+      border-radius: 5px;
+      padding: 5px 10px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-right: 5px;
+    }
+    .receipt-button:hover {
+      background-color: #444488;
+    }
+    .cancel-button {
+      background-color: #d9534f;
+      color: #fff;
+      font-size: 14px;
+      border-radius: 5px;
+      padding: 5px 10px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .cancel-button:hover {
+      background-color: #c9302c;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      z-index: 1000;
+      width: 600px;
+      color: #000000;
+    }
+    .modal-header {
+      font-size: 20px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+      color: #333;
+    }
+    .modal-header::before {
+      content: "";
+      display: inline-block;
+      width: 5px;
+      height: 24px;
+      background-color: #5555aa;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    .modal-content {
+      font-size: 16px;
+      color: #333;
+    }
+    .modal-content label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+      text-align: left;
+    }
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #f9f9f9;
+      color: #333;
+      font-size: 16px;
+    }
+    .modal-content button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #007bff;
+      color: #ffffff;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+      text-align: center;
+    }
+    .modal-content button:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      margin: 30px auto;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      padding: 10px;
+    }
+    .receipt-footer {
+      background-color: #eee;
+      padding: 10px;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #555;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 1) БЛОК ЛОГИНА -->
+<div id="loginPage">
+  <header id="loginHeader">
+    <span class="header-title-login">Global Transit Access</span>
+    <span></span>
+  </header>
+
+  <div class="main-container">
+    <div class="login-box">
+      <h2>Identification Code Login</h2>
+      <div class="form-group">
+        <label for="codeInput">Identification Code</label>
+        <input type="text" id="codeInput" placeholder="Enter your 6-digit code">
+      </div>
+      <button class="login-btn" onclick="loginByCode()">Proceed</button>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    © 2025 International Transit Systems. All rights reserved.
+  </div>
+</div>
+
+<!-- 2) БЛОК БАНКИНГА -->
+<div id="bankingPage" style="display: none;">
+  <!-- Оверлей со спиннером -->
+  <div id="pageLoaderOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <header id="bankingHeader">
+    <span class="header-title-banking">Transit system ARMOG 13.2</span>
+  </header>
+
+  <div class="container">
+    <!-- Блок информации об аккаунте -->
+    <div class="account-info-block">
+      <div class="account-info-title">Account Information</div>
+
+      <div class="account-info-subblock">
+        <div class="info-left-col">
+          <div class="account-info-label">Account Type</div>
+          <div class="info-divider"></div>
+          <div class="account-info-label">Legal Account Owner</div>
+          <div class="account-info-label">ID Card</div>
+          <div class="account-info-label">Phone</div>
+          <div class="account-info-label">Email</div>
+          <div class="account-info-label">Address</div>
+        </div>
+        <div class="info-right-col">
+          <div class="account-info-value">Non-resident Transit External Account</div>
+          <div class="info-divider"></div>
+          <div class="account-info-value">Saralapov Ayzan</div>
+          <div class="account-info-value">S7E2ISQC9</div>
+          <div class="account-info-value">+330767153770</div>
+          <div class="account-info-value">saralapova1985a@gmail.com</div>
+          <div class="account-info-value">14 Boulevard Henri Sappia, CP 06 100</div>
+        </div>
+      </div>
+
+      <div class="info-divider"></div>
+
+      <div class="account-info-subblock">
+        <div class="info-left-col">
+          <div class="account-info-label">AML Confirmation</div>
+          <div class="account-info-label">Declaration</div>
+        </div>
+        <div class="info-right-col">
+          <div class="account-info-value">Completed on 01/01/2025</div>
+          <div class="account-info-value" style="color:#990000; font-weight:bold;">
+            Declaration #DCL-2025-TRANSIT<br>
+            Issued: 2025-01-02<br>
+            Valid until: 2026-01-02
+          </div>
+        </div>
+      </div>
+      <button class="statement-btn" onclick="openStatementModal()">Account Statement</button>
+    </div>
+
+    <!-- Блок счетов -->
+    <div class="accounts-wrapper">
+      <!-- Счёт в евро -->
+      <div class="account-section">
+        <div class="account-section-header">Transit Account EUR</div>
+        <div class="account-subtitle">Non-resident Transit External Account</div>
+        <div class="balance-row">
+          <div class="balance-title">Balance</div>
+          <p class="balance" id="eurBalance">€ 0.00</p>
+        </div>
+        <button class="account-button withdraw-btn" onclick="openWithdrawModal('EUR')">Withdraw</button>
+        <button class="account-button convert-btn" onclick="openConvertModal('EUR')">Convert to USDT</button>
+      </div>
+
+      <!-- Кошелёк USDT -->
+      <div class="account-section">
+        <div class="account-section-header">Wallet USDT</div>
+        <div class="account-subtitle">USDT wallet (TRC20 or ERC20)</div>
+        <div class="balance-row">
+          <div class="balance-title">Balance</div>
+          <p class="balance" id="usdtBalance">48,515.84 USDT</p>
+        </div>
+        <button class="account-button withdraw-btn" onclick="openWithdrawModalUSDT()">Withdraw</button>
+        <button class="account-button convert-btn" onclick="openConvertModal('USDT')">Convert to EUR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- История транзакций -->
+  <div class="transactions-wrapper">
+    <h2>Transaction History</h2>
+    <table class="transactions-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Transaction Type</th>
+          <th>Method</th>
+          <th>Comment</th>
+          <th>Amount</th>
+          <th style="color:#555;">Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="txBody">
+        <!-- Первая транзакция будет добавлена автоматически при отсутствии сохранённых данных -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Модалки (SEPA, USDT, Convert, Statement, ViewReceipt) -->
+  <div class="modal" id="modalConfirm">
+    <div class="modal-header">Withdraw Funds (SEPA)</div>
+    <div class="modal-content">
+      <label>Amount</label>
+      <div style="display:flex; gap:5px; margin-bottom:15px;">
+        <input type="text" id="withdrawAmount" placeholder="0.00" style="flex:1;">
+        <span style="padding:8px 10px; background-color:#f9f9f9; color:#333; border:1px solid #ccc; border-radius:5px;">
+          EUR
+        </span>
+      </div>
+      <button onclick="confirmWithdraw()">Next</button>
+      <button style="background-color: #d9534f;" onclick="closeAllModals()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalRecipient">
+    <div class="modal-header">Recipient Information (SEPA)</div>
+    <div class="modal-content">
+      <label>Recipient Name</label>
+      <input type="text" id="recipientName" placeholder="Enter recipient name">
+
+      <label>IBAN</label>
+      <input type="text" id="recipientIBAN" placeholder="XX00000000000000000000">
+
+      <label>BIC</label>
+      <input type="text" id="recipientBIC" placeholder="8 or 11 chars">
+
+      <button onclick="showReceiptSEPA()">Submit</button>
+      <button style="background-color: #d9534f;" onclick="closeAllModals()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalSepaReceipt">
+    <div class="modal-header">SEPA Transfer Receipt</div>
+    <div class="modal-content" id="sepaReceiptContent"></div>
+    <button onclick="finalizeSEPA()" style="margin-top:20px;">OK</button>
+    <button onclick="closeAllModals()" style="background-color: #d9534f; margin-top:10px;">Cancel</button>
+  </div>
+
+  <div class="modal" id="modalUSDTWithdraw">
+    <div class="modal-header">Withdraw USDT</div>
+    <div class="modal-content">
+      <label>Enter Amount (USDT)</label>
+      <input type="text" id="usdtWithdrawAmount" placeholder="0.00">
+
+      <label>Enter USDT Wallet Address</label>
+      <input type="text" id="usdtWithdrawAddress" placeholder="Your USDT address">
+      <button onclick="previewUSDTWithdraw()">Preview</button>
+      <button style="background-color: #d9534f;" onclick="closeAllModals()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalUSDTPreview">
+    <div class="modal-header">USDT Withdrawal Preview</div>
+    <div class="modal-content" id="usdtPreviewContent"></div>
+    <button onclick="finalizeUSDTWithdraw()" style="margin-top:20px;">Confirm</button>
+    <button onclick="closeAllModals()" style="background-color: #d9534f; margin-top:10px;">Cancel</button>
+  </div>
+
+  <div class="modal" id="modalConvert">
+    <div class="modal-header">Convert Funds</div>
+    <div class="modal-content">
+      <label>Amount</label>
+      <input type="text" id="convertAmount" placeholder="0.00">
+      <p id="convertInfo" style="font-size:14px; color:#666;"></p>
+      <button onclick="confirmConvert()">Confirm Conversion</button>
+      <button style="background-color: #d9534f;" onclick="closeAllModals()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalStatement">
+    <div class="modal-header">Account Statement</div>
+    <div class="modal-content">
+      <h3 style="margin-bottom:10px;">Important information about transit cell rental fee</h3>
+      <p>
+        According to <strong>European Union regulations</strong> on international transit accounts,
+        there is a <strong>mandatory rental fee</strong> for the transit cell.
+        This fee is required for legal compliance and covers administrative
+        costs under EU law for cross-border transfers and AML monitoring.
+      </p>
+      <p>
+        If you <strong>reuse this account</strong> for future operations,
+        the <strong>nominal account owner</strong> must pay a new transit declaration fee of
+        <strong>5,000 EUR</strong>. This is enforced under
+        <strong>EU transit account declarations</strong> and
+        <strong>financial compliance directives</strong>.
+      </p>
+      <p>
+        Please note that failure to meet these payments or to comply with EU laws
+        may result in account suspension or further regulatory actions.
+      </p>
+      <button style="margin-top:20px;" onclick="closeAllModals()">Close</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalViewReceipt">
+    <div class="modal-header">Transaction Receipt</div>
+    <div class="modal-content" id="viewReceiptContent"></div>
+  </div>
+</div>
+
+<script>
+  // Правильный код для входа
+  const CORRECT_CODE = "134313";
+
+  // Первичное определение балансов
+  let euroBalance = 0;           // Изначально EUR = 0
+  let usdtBalance = 48515.84;    // Изначально USDT = 48515.84
+
+  // Текущий выбранный тип счёта для вывода (EUR/USDT)
+  let currentAccountType = null;
+  let withdrawAmount = 0;
+
+  // Для USDT вывода
+  let usdtWithdrawAmt = 0;
+  let usdtWithdrawAddress = "";
+
+  // Для конвертации
+  let convertingFrom = null;
+
+  // Данные SEPA
+  let recipientName = "";
+  let recipientIBAN = "";
+  let recipientBIC = "";
+
+  // Курс (1 EUR = 1.03 USDT)
+  const EUR_TO_USDT = 1.03;
+  const USDT_TO_EUR = 1 / EUR_TO_USDT; // ~0.97
+
+  // ХРАНИЛИЩЕ для истории транзакций (в памяти, затем дубль в localStorage)
+  let transactionsData = [];
+
+  // ===== 1) При загрузке страницы =====
+  function onPageLoad() {
+    // 1. Попытка загрузить состояние из localStorage
+    loadStateFromLocalStorage();
+
+    // 2. Если транзакций нет — добавим первую транзакцию (48,515.84 USDT), метод CRYPTO
+    if (transactionsData.length === 0) {
+      addTransactionRow(
+        "Crypto deposit",
+        "Deposit",
+        "CRYPTO",
+        "Initial deposit via USDT",
+        "48,515.84 USDT",
+        {},
+        false
+      );
+    }
+
+    // 3. Прячем спиннер через 0.5 секунды
+    setTimeout(() => {
+      const loader = document.getElementById('pageLoaderOverlay');
+      loader.classList.add('fadeOut');
+      setTimeout(() => {
+        loader.style.display = 'none';
+      }, 500);
+    }, 500);
+
+    // 4. Отрисовать актуальный баланс и транзакции
+    updateBalancesUI();
+    redrawTransactionsTable();
+  }
+
+  // ===== 2) Сохранение/загрузка из localStorage =====
+  function saveStateToLocalStorage() {
+    const stateObj = {
+      euroBalance: euroBalance,
+      usdtBalance: usdtBalance,
+      transactions: transactionsData
+    };
+    localStorage.setItem('armogState', JSON.stringify(stateObj));
+  }
+
+  function loadStateFromLocalStorage() {
+    const saved = localStorage.getItem('armogState');
+    if (saved) {
+      try {
+        const stateObj = JSON.parse(saved);
+        euroBalance = stateObj.euroBalance || 0;
+        usdtBalance = stateObj.usdtBalance || 0;
+        transactionsData = stateObj.transactions || [];
+      } catch(e) {
+        console.warn("Failed to parse localStorage data:", e);
+      }
+    }
+  }
+
+  // ===== 3) Логика логина =====
+  function loginByCode() {
+    const val = document.getElementById('codeInput').value.trim();
+    if (!val) {
+      alert("Please enter your identification code.");
+      return;
+    }
+    if (val === CORRECT_CODE) {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('bankingPage').style.display = 'block';
+      onPageLoad();
+    } else {
+      alert("Invalid code. Please check and try again.");
+    }
+  }
+
+  // ===== 4) Закрыть все модалки =====
+  function closeAllModals() {
+    document.getElementById('overlay').style.display = 'none';
+    [
+      'modalConfirm',
+      'modalRecipient',
+      'modalSepaReceipt',
+      'modalUSDTWithdraw',
+      'modalUSDTPreview',
+      'modalConvert',
+      'modalStatement',
+      'modalViewReceipt'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display = 'none';
+    });
+  }
+
+  // ===== 5) Statement =====
+  function openStatementModal() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('modalStatement').style.display = 'block';
+  }
+
+  // ===== 6) SEPA Withdraw (EUR) =====
+  function openWithdrawModal(acct) {
+    currentAccountType = acct;
+    document.getElementById('withdrawAmount').value = "";
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('modalConfirm').style.display = 'block';
+  }
+
+  function confirmWithdraw() {
+    let amtStr = document.getElementById('withdrawAmount').value.replace(',', '.');
+    let amt = parseFloat(amtStr);
+    if (!amt || amt <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+    if (amt > euroBalance) {
+      alert("Insufficient EUR balance.");
+      return;
+    }
+    withdrawAmount = amt;
+    document.getElementById('modalConfirm').style.display = 'none';
+    document.getElementById('modalRecipient').style.display = 'block';
+  }
+
+  function validateSEPAFields() {
+    const name = document.getElementById('recipientName').value.trim();
+    const iban = document.getElementById('recipientIBAN').value.trim();
+    const bic = document.getElementById('recipientBIC').value.trim();
+
+    const nameRegex = /^[A-Za-zА-Яа-яЁё\s]+$/;
+    if (!nameRegex.test(name)) {
+      alert("Recipient Name: only letters and spaces are allowed.");
+      return false;
+    }
+    const ibanRegex = /^[A-Z]{2}\d{20}$/i;
+    if (!ibanRegex.test(iban)) {
+      alert("IBAN must be 2 letters + 20 digits.");
+      return false;
+    }
+    const bicRegex = /^[A-Za-z0-9]{8,11}$/;
+    if (!bicRegex.test(bic)) {
+      alert("BIC must be 8 or 11 alphanumeric characters.");
+      return false;
+    }
+    return true;
+  }
+
+  function showReceiptSEPA() {
+    if (!validateSEPAFields()) {
+      return;
+    }
+    recipientName = document.getElementById('recipientName').value.trim();
+    recipientIBAN = document.getElementById('recipientIBAN').value.trim();
+    recipientBIC = document.getElementById('recipientBIC').value.trim();
+
+    document.getElementById('modalRecipient').style.display = 'none';
+    const summary = `
+      <p><strong>Sender:</strong> EUR account</p>
+      <p><strong>Method:</strong> SEPA</p>
+      <p><strong>Amount:</strong> € ${withdrawAmount.toFixed(2)}</p>
+      <p><strong>Recipient Name:</strong> ${recipientName}</p>
+      <p><strong>Recipient IBAN:</strong> ${recipientIBAN}</p>
+      <p><strong>Recipient BIC:</strong> ${recipientBIC}</p>
+    `;
+    document.getElementById('sepaReceiptContent').innerHTML = summary;
+    document.getElementById('modalSepaReceipt').style.display = 'block';
+  }
+
+  function finalizeSEPA() {
+    euroBalance -= withdrawAmount;
+    if (euroBalance < 0) euroBalance = 0;
+
+    addTransactionRow(
+      "SEPA withdrawal",
+      "Withdrawal",
+      "SEPA",
+      "",
+      `€ ${withdrawAmount.toFixed(2)}`,
+      {
+        recipientName: recipientName,
+        recipientIBAN: recipientIBAN,
+        recipientBIC: recipientBIC
+      },
+      true
+    );
+    updateBalancesUI();
+    alert("Withdrawal request accepted for processing.");
+    closeAllModals();
+  }
+
+  // ===== 7) USDT Withdraw =====
+  function openWithdrawModalUSDT() {
+    document.getElementById('usdtWithdrawAmount').value = "";
+    document.getElementById('usdtWithdrawAddress').value = "";
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('modalUSDTWithdraw').style.display = 'block';
+  }
+
+  function previewUSDTWithdraw() {
+    let amtStr = document.getElementById('usdtWithdrawAmount').value.replace(',', '.');
+    let amt = parseFloat(amtStr);
+    let addr = document.getElementById('usdtWithdrawAddress').value.trim();
+    if (!amt || amt <= 0) {
+      alert("Please enter a valid USDT amount.");
+      return;
+    }
+    if (amt > usdtBalance) {
+      alert("Insufficient USDT balance.");
+      return;
+    }
+    if (!addr) {
+      alert("Please enter a USDT address.");
+      return;
+    }
+    usdtWithdrawAmt = amt;
+    usdtWithdrawAddress = addr;
+
+    document.getElementById('modalUSDTWithdraw').style.display = 'none';
+    const content = `
+      <p><strong>Amount:</strong> ${amt.toFixed(2)} USDT</p>
+      <p><strong>Destination address:</strong> ${addr}</p>
+    `;
+    document.getElementById('usdtPreviewContent').innerHTML = content;
+    document.getElementById('modalUSDTPreview').style.display = 'block';
+  }
+
+  function finalizeUSDTWithdraw() {
+    usdtBalance -= usdtWithdrawAmt;
+    if (usdtBalance < 0) usdtBalance = 0;
+
+    addTransactionRow(
+      "USDT withdrawal",
+      "Withdrawal",
+      "USDT",
+      "",
+      usdtWithdrawAmt.toFixed(2) + " USDT",
+      { usdtAddress: usdtWithdrawAddress },
+      true
+    );
+    updateBalancesUI();
+    alert("USDT withdrawal request accepted for processing.");
+    closeAllModals();
+  }
+
+  // ===== 8) Общая функция для добавления транзакции =====
+  function addTransactionRow(desc, flowType, methodType, comment, amount, extraData = {}, inProcessing = false) {
+    const now = new Date().toISOString().slice(0,10);
+    const transactionObj = {
+      date: now,
+      desc: desc,
+      flowType: flowType,
+      methodType: methodType,
+      comment: comment,
+      amount: amount,
+      inProcessing: inProcessing,
+      extraData: extraData
+    };
+    transactionsData.push(transactionObj);
+
+    redrawTransactionsTable();
+    saveStateToLocalStorage();
+  }
+
+  // Перерисовать таблицу
+  function redrawTransactionsTable() {
+    const txBody = document.getElementById('txBody');
+    txBody.innerHTML = "";
+    transactionsData.forEach((tx) => {
+      const tr = document.createElement('tr');
+
+      const dateCell = document.createElement('td');
+      dateCell.textContent = tx.date;
+
+      const descCell = document.createElement('td');
+      descCell.textContent = tx.desc;
+
+      const flowCell = document.createElement('td');
+      flowCell.textContent = tx.flowType;
+
+      const methodCell = document.createElement('td');
+      methodCell.textContent = tx.methodType;
+
+      const commentCell = document.createElement('td');
+      commentCell.textContent = tx.comment;
+
+      const amtCell = document.createElement('td');
+      amtCell.textContent = tx.amount;
+
+      const statusCell = document.createElement('td');
+      // Проверка статусов
+      if (tx.inProcessing) {
+        if (tx.cancelled) {
+          statusCell.textContent = "Cancelled";
+          statusCell.style.color = '#dc3545';
+        } else {
+          statusCell.textContent = "In processing...";
+          statusCell.style.color = '#cd853f';
+        }
+      } else {
+        statusCell.textContent = "Completed";
+        statusCell.style.color = '#28a745';
+      }
+
+      const actionCell = document.createElement('td');
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'receipt-button';
+      viewBtn.textContent = "View Receipt";
+      viewBtn.onclick = () => {
+        viewTransactionReceipt(
+          tx.date,
+          tx.desc,
+          tx.flowType,
+          tx.methodType,
+          tx.comment,
+          tx.amount,
+          tx.extraData,
+          tx.cancelled ? "Cancelled" : (tx.inProcessing ? "In processing..." : "Completed")
+        );
+      };
+      actionCell.appendChild(viewBtn);
+
+      // Если транзакция ещё обрабатывается и не отменена, покажем Cancel
+      if (tx.inProcessing && !tx.cancelled) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'cancel-button';
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.onclick = () => {
+          cancelTransaction(cancelBtn);
+        };
+        actionCell.appendChild(cancelBtn);
+      }
+
+      tr.appendChild(dateCell);
+      tr.appendChild(descCell);
+      tr.appendChild(flowCell);
+      tr.appendChild(methodCell);
+      tr.appendChild(commentCell);
+      tr.appendChild(amtCell);
+      tr.appendChild(statusCell);
+      tr.appendChild(actionCell);
+
+      txBody.appendChild(tr);
+    });
+  }
+
+  // ===== 9) Обновить балансы =====
+  function updateBalancesUI() {
+    document.getElementById('eurBalance').textContent = `€ ${euroBalance.toFixed(2)}`;
+    document.getElementById('usdtBalance').textContent = usdtBalance.toFixed(2) + " USDT";
+    saveStateToLocalStorage();
+  }
+
+  // ===== 10) Конвертация: EUR <-> USDT =====
+  function openConvertModal(acct) {
+    convertingFrom = acct;
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('modalConvert').style.display = 'block';
+    if (acct === 'EUR') {
+      document.getElementById('convertInfo').textContent = "Convert from EUR to USDT";
+    } else {
+      document.getElementById('convertInfo').textContent = "Convert from USDT to EUR";
+    }
+  }
+
+  function confirmConvert() {
+    const amtStr = document.getElementById('convertAmount').value.replace(',', '.');
+    const amt = parseFloat(amtStr);
+    if (!amt || amt <= 0) {
+      alert("Please enter a valid amount to convert.");
+      return;
+    }
+    if (convertingFrom === 'EUR') {
+      if (amt > euroBalance) {
+        alert("Insufficient EUR balance.");
+        return;
+      }
+      const usdtOut = amt * EUR_TO_USDT;
+      euroBalance -= amt;
+      usdtBalance += usdtOut;
+      addTransactionRow(
+        "Convert: EUR to USDT",
+        "Deposit",
+        "INTERNAL",
+        `From €${amt.toFixed(2)}`,
+        usdtOut.toFixed(2) + " USDT",
+        {},
+        false
+      );
+    } else {
+      if (amt > usdtBalance) {
+        alert("Insufficient USDT balance.");
+        return;
+      }
+      const euroOut = amt * USDT_TO_EUR;
+      usdtBalance -= amt;
+      euroBalance += euroOut;
+      addTransactionRow(
+        "Convert: USDT to EUR",
+        "Deposit",
+        "INTERNAL",
+        `From ${amt.toFixed(2)} USDT`,
+        `€ ${euroOut.toFixed(2)}`,
+        {},
+        false
+      );
+    }
+    updateBalancesUI();
+    closeAllModals();
+    alert("Conversion completed successfully.");
+  }
+
+  // ===== 11) Просмотр квитанции =====
+  function viewTransactionReceipt(date, desc, flow, type, comment, amount, extraData = {}, statusText = "") {
+    const content = `
+      <h3>Generic USDT/EUR Receipt</h3>
+      <p>Date: ${date}</p>
+      <p>Description: ${desc}</p>
+      <p>Flow: ${flow}</p>
+      <p>Method: ${type}</p>
+      <p>Comment: ${comment}</p>
+      <p>Amount: ${amount}</p>
+      <p>Status: ${statusText}</p>
+      <button onclick="closeAllModals()" style="margin-top:10px;">Close</button>
+    `;
+    document.getElementById('viewReceiptContent').innerHTML = `
+      <div class="modal-header">Transaction Receipt</div>
+      <div class="modal-content">${content}</div>
+    `;
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('modalViewReceipt').style.display = 'block';
+  }
+
+  // ===== 12) Отмена транзакции => вернуть средства =====
+  function cancelTransaction(cancelBtn) {
+    const tr = cancelBtn.closest('tr');
+    if (!tr) return;
+
+    const date = tr.cells[0].textContent;
+    const desc = tr.cells[1].textContent;
+    const methodType = tr.cells[3].textContent;
+    const amountCell = tr.cells[5].textContent;
+
+    const amtNum = parseFloat(amountCell.replace(/[^\d.]/g, ''));
+    if (methodType === "SEPA" || desc.includes("SEPA")) {
+      euroBalance += amtNum;
+    } else if (methodType === "USDT" || desc.includes("USDT")) {
+      usdtBalance += amtNum;
+    }
+    updateBalancesUI();
+
+    const tx = transactionsData.find(t =>
+      t.date === date && t.desc === desc && t.amount === amountCell && t.inProcessing === true
+    );
+    if (tx) {
+      tx.inProcessing = false;
+      tx.cancelled = true;
+    }
+
+    redrawTransactionsTable();
+    saveStateToLocalStorage();
+
+    alert("Transaction cancelled. Funds returned to balance.");
+  }
+</script>
+
+<footer>
+  © 2025 International Transit Systems. All rights reserved.
+</footer>
+</body>
+</html>
